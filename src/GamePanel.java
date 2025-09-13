@@ -20,14 +20,14 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 public class GamePanel extends JPanel implements ActionListener {
 
 	//change later
     private int rows = 14;
     private int columns = 18;
-    private int score;
-    
+
     private int mines = 40;
     private int maxFlags = 40;
     private int flags = 40;
@@ -224,7 +224,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void win() {
         topPanel.stop();
-        score = topPanel.getScore();
+        int score = topPanel.getScore();
         if(score < bestScores[diff-1]) {
             bestScores[diff-1] = score;
             try {
@@ -264,38 +264,55 @@ public class GamePanel extends JPanel implements ActionListener {
     public void lose() {
         topPanel.stop();
         System.out.println("lost");
-        for(int i = 0; i < rows; i++) {
+
+        // First, reveal the board and disable all buttons
+        for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
-                if(mine[i][j] && !flag[i][j]) {
+
+                if (mine[i][j] && !flag[i][j]) {
+                    // This is an unflagged mine, show the bomb icon
                     spots[i][j].setIcon(bomb);
-                    System.out.println("bomb (" + i + ", " + j + ")");
+                    spots[i][j].setDisabledIcon(bomb);
 
-                } else if(flag[i][j] && !mine[i][j]) {
+                } else if (flag[i][j] && !mine[i][j]) {
+                    // This flag was placed on a non-mine, show the 'X' icon
                     spots[i][j].setIcon(notMine);
-                    System.out.println("x (" + i + ", " + j + ")");
-
+                    spots[i][j].setDisabledIcon(notMine);
                 }
+
+                // Disable the button to prevent further clicks
+                spots[i][j].setEnabled(false);
             }
         }
+
+        // Update the score labels for the game over panel
         currentScore.setText(Integer.toString(topPanel.getScore()));
-        if(bestScores[diff-1] == 2147483647) {
+        if (bestScores[diff - 1] == 2147483647) { // Integer.MAX_VALUE
             bestScore.setText("______");
         } else {
-            bestScore.setText(Integer.toString(bestScores[diff-1]));
+            bestScore.setText(Integer.toString(bestScores[diff - 1]));
         }
 
+        // Create a timer to switch to the game over panel after a 3-second delay
+        Timer gameOverTimer = new Timer(3000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // This code will run on the EDT after the delay
+                removeAll();
+                setLayout(new BorderLayout());
+                add(gameOverPanel, BorderLayout.CENTER);
+                revalidate();
+                repaint();
+                gameFrame.pack();
+                gameFrame.setLocationRelativeTo(null);
+            }
+        });
 
+        // Ensure the timer only runs once
+        gameOverTimer.setRepeats(false);
 
-        this.removeAll();
-        this.setLayout(new BorderLayout());
-        this.revalidate();
-        this.repaint();
-        this.add(gameOverPanel, BorderLayout.CENTER);
-        gameFrame.pack();
-        gameFrame.setLocationRelativeTo(null);
-        //playAgain = new JButton();
-
-
+        // Start the timer
+        gameOverTimer.start();
     }
 
 	private void minePlacement(int row, int column) {
