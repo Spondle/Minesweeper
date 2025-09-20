@@ -54,7 +54,7 @@ public class TopPanel extends JPanel {
         timer = new Timer(1, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 msElapsed++;
-                uptdateTime();
+                updateTime();
 
             }
         });
@@ -96,10 +96,10 @@ public class TopPanel extends JPanel {
 
     }
 
-    public void uptdateTime() {
+    public void updateTime() {
         int ms = msElapsed % 1000;
-        int sec = msElapsed / 1000;
-        int min = msElapsed / 60000;
+        int sec = (msElapsed / 1000) % 60;
+        int min = (msElapsed / 60000) % 60;
         int hour = msElapsed / 3600000;
 
         String timeElapsed = String.format("%02d:%02d:%02d:%03d", hour, min, sec, ms);
@@ -124,7 +124,7 @@ public class TopPanel extends JPanel {
     public void reset() {
         timer.stop();
         msElapsed = 0;
-        uptdateTime();
+        updateTime();
 
     }
 

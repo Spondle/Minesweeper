@@ -305,6 +305,8 @@ public class GamePanel extends JPanel implements ActionListener {
                 repaint();
                 gameFrame.pack();
                 gameFrame.setLocationRelativeTo(null);
+                topPanel.reset();
+
             }
         });
 
