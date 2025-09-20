@@ -44,11 +44,17 @@ public class TopPanel extends JPanel {
         medium.addActionListener(e -> this.setDifficulty(2));
         hard.addActionListener(e -> this.setDifficulty(3));
 
-        flagPole = new ImageIcon("src/assets/Flag.png");
-        flag = new JLabel(flagPole);
-
-        stopwatch = new ImageIcon("src/assets/Stopwatch.png");
-        clock = new JLabel(stopwatch);
+        try {
+            flagPole = new ImageIcon(getClass().getResource("/assets/Flag.png"));
+            flag = new JLabel(flagPole);
+            stopwatch = new ImageIcon(getClass().getResource("/assets/Stopwatch.png"));
+            clock = new JLabel(stopwatch);
+        } catch (Exception e) {
+            flagPole = null;
+            flag = new JLabel();
+            stopwatch = null;
+            clock = new JLabel();
+        }
 
 
         timer = new Timer(1, new ActionListener() {

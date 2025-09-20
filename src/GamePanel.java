@@ -8,12 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Scanner;
+import javax.imageio.ImageIO;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -38,11 +35,10 @@ public class GamePanel extends JPanel implements ActionListener {
     private boolean flag[][];
     private boolean spotsCleared[][];
 
-    private ImageIcon bomb = new ImageIcon("src/assets/Mine.png");
-    private ImageIcon notMine = new ImageIcon("src/assets/x.png");
-
+    private ImageIcon bomb;
+    private ImageIcon notMine;
     private ImageIcon[] numbers;
-    private ImageIcon flagPole = new ImageIcon("src/assets/Flag.png");
+    private ImageIcon flagPole;
     private TopPanel topPanel;
     private JPanel gameOverPanel;
     private int[] bestScores = new int[3];
@@ -52,14 +48,11 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private GameFrame gameFrame;
     private JButton playAgain;
-    private ImageIcon stopwatch = new ImageIcon("src/assets/Stopwatch.png");
-    private JLabel clock = new JLabel(stopwatch);
-    private ImageIcon Record = new ImageIcon("src/assets/Record.png");
-    private JLabel best = new JLabel(Record);
-    private File scores = new File("src/assets/scores.txt");
+    private ImageIcon stopwatch;
+    private JLabel clock;
+    private ImageIcon Record;
+    private JLabel best;
     private Scanner scanner;
-    private PrintStream printStream;
-    private FileWriter writer;
     private JPanel leftGameOverPanel;
     private JPanel rightGameOverPanel;
 
@@ -82,22 +75,35 @@ public class GamePanel extends JPanel implements ActionListener {
         this.playAgain = new JButton();
         this.leftGameOverPanel = new JPanel(new BorderLayout());
         this.rightGameOverPanel = new JPanel(new BorderLayout());
-        //gameOverPanel.setPreferredSize(new Dimension(300, 300));
-        //playAgain.setPreferredSize(new Dimension(200, 100));
+        // Load images from resources
         try {
-            this.scanner = new Scanner(scores);
-            int i = 0;
-            while(scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                int num = Integer.parseInt(line);
-                System.out.println(line);
-                bestScores[i] = num;
-                i++;
-
-
+            bomb = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Mine.png")));
+            notMine = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/x.png")));
+            flagPole = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Flag.png")));
+            stopwatch = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Stopwatch.png")));
+            Record = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Record.png")));
+            clock = new JLabel(stopwatch);
+            best = new JLabel(Record);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load images", e);
+        }
+        // Load best scores from resource
+    try (InputStream is = getClass().getResourceAsStream("/assets/scores.txt")) {
+            if (is != null) {
+                this.scanner = new Scanner(is);
+                int i = 0;
+                while(scanner.hasNextLine() && i < 3) {
+                    String line = scanner.nextLine();
+                    int num = Integer.parseInt(line);
+                    bestScores[i] = num;
+                    i++;
+                }
+            } else {
+                // Default high scores if not found
+                for (int i = 0; i < 3; i++) bestScores[i] = Integer.MAX_VALUE;
             }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            for (int i = 0; i < 3; i++) bestScores[i] = Integer.MAX_VALUE;
         }
         leftGameOverPanel.add(new JLabel("Score:"), BorderLayout.NORTH);
         rightGameOverPanel.add(new JLabel("High Score:"), BorderLayout.NORTH);
@@ -115,10 +121,11 @@ public class GamePanel extends JPanel implements ActionListener {
         gameOverPanel.add(playAgain, BorderLayout.SOUTH);
         this.numbers = new ImageIcon[9];
         for(int i = 1; i < 9; i++) {
-            String path = "src/assets/" + Integer.toString(i) + ".png";
-            numbers[i] =  new ImageIcon(path);
-
-
+            try {
+                numbers[i] = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/" + i + ".png")));
+            } catch (IOException e) {
+                numbers[i] = null;
+            }
         }
         for(int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
@@ -227,24 +234,17 @@ public class GamePanel extends JPanel implements ActionListener {
         int score = topPanel.getScore();
         if(score < bestScores[diff-1]) {
             bestScores[diff-1] = score;
+            // Write new high scores to user directory (not inside JAR)
             try {
-                writer = new FileWriter("src/assets/scores.txt");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            try {
-                printStream = new PrintStream(scores);
-                for(int i = 0; i < 3; i++) {
-                    printStream.println(bestScores[i]);
+                File outFile = new File(System.getProperty("user.home"), ".minesweeper_scores.txt");
+                try (PrintWriter out = new PrintWriter(new FileWriter(outFile))) {
+                    for(int i = 0; i < 3; i++) {
+                        out.println(bestScores[i]);
+                    }
                 }
-
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
+            } catch (IOException e) {
+                // Ignore write errors
             }
-
-
-
-
         }
         bestScore.setText(String.valueOf(bestScores[diff-1]));
         currentScore.setText(String.valueOf(score));
