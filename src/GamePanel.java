@@ -115,7 +115,7 @@ public class GamePanel extends JPanel implements ActionListener {
         } catch (Exception e) {
             for (int i = 0; i < 3; i++) bestScores[i] = Integer.MAX_VALUE;
         }
-        Font gameOverFont = new Font(currentScore.getFont().getName(), Font.BOLD, spotSize);
+        Font gameOverFont = new Font(currentScore.getFont().getName(), Font.BOLD, spotSize * 1 / 2);
         JLabel scoreLabel = new JLabel("Score:");
         scoreLabel.setFont(gameOverFont);
         leftGameOverPanel.add(scoreLabel, BorderLayout.NORTH);
