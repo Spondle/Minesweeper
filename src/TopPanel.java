@@ -9,6 +9,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.Timer;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Image;
 
 
 public class TopPanel extends JPanel {
@@ -29,6 +32,13 @@ public class TopPanel extends JPanel {
     private ImageIcon stopwatch;
     private GamePanel gamePanel;
 
+    private ImageIcon scaleIcon(ImageIcon icon, int size) {
+        if (icon == null || icon.getImage() == null) return icon;
+        Image img = icon.getImage();
+        Image scaledImg = img.getScaledInstance(size, size, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaledImg);
+    }
+
     public TopPanel() {
         this.setLayout(new FlowLayout());
         this.difficulty = new JButton("Medium");
@@ -44,10 +54,20 @@ public class TopPanel extends JPanel {
         medium.addActionListener(e -> this.setDifficulty(2));
         hard.addActionListener(e -> this.setDifficulty(3));
 
+        Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        int baseSize = Math.max(16, screenSize.height / 45);
+        Font topFont = new Font(flags.getFont().getName(), Font.BOLD, baseSize);
+        flags.setFont(topFont);
+        time.setFont(topFont);
+        difficulty.setFont(topFont);
+        easy.setFont(topFont);
+        medium.setFont(topFont);
+        hard.setFont(topFont);
+
         try {
-            flagPole = new ImageIcon(getClass().getResource("/assets/Flag.png"));
+            flagPole = scaleIcon(new ImageIcon(getClass().getResource("/assets/Flag.png")), baseSize * 2);
             flag = new JLabel(flagPole);
-            stopwatch = new ImageIcon(getClass().getResource("/assets/Stopwatch.png"));
+            stopwatch = scaleIcon(new ImageIcon(getClass().getResource("/assets/Stopwatch.png")), baseSize * 2);
             clock = new JLabel(stopwatch);
         } catch (Exception e) {
             flagPole = null;

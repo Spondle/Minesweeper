@@ -56,7 +56,14 @@ public class GamePanel extends JPanel implements ActionListener {
     private JPanel leftGameOverPanel;
     private JPanel rightGameOverPanel;
 
+    private int spotSize = 30;
 
+    private ImageIcon scaleIcon(ImageIcon icon, int size) {
+        if (icon == null || icon.getImage() == null) return icon;
+        java.awt.Image img = icon.getImage();
+        java.awt.Image scaledImg = img.getScaledInstance(size, size, java.awt.Image.SCALE_SMOOTH);
+        return new ImageIcon(scaledImg);
+    }
 
     GamePanel() {
         init();
@@ -64,6 +71,9 @@ public class GamePanel extends JPanel implements ActionListener {
 
     }
     public void init() {
+        Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        spotSize = Math.max(20, Math.min((screenSize.height - 250) / 24, (screenSize.width - 200) / 28));
+        
         this.setLayout(new GridLayout(rows, columns));
         this.spots = new  JButton[rows][columns];
         this.spotsCleared = new boolean[rows][columns];
@@ -77,9 +87,9 @@ public class GamePanel extends JPanel implements ActionListener {
         this.rightGameOverPanel = new JPanel(new BorderLayout());
         // Load images from resources
         try {
-            bomb = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Mine.png")));
-            notMine = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/x.png")));
-            flagPole = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Flag.png")));
+            bomb = scaleIcon(new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Mine.png"))), spotSize);
+            notMine = scaleIcon(new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/x.png"))), spotSize);
+            flagPole = scaleIcon(new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Flag.png"))), spotSize);
             stopwatch = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Stopwatch.png")));
             Record = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/Record.png")));
             clock = new JLabel(stopwatch);
@@ -105,12 +115,24 @@ public class GamePanel extends JPanel implements ActionListener {
         } catch (Exception e) {
             for (int i = 0; i < 3; i++) bestScores[i] = Integer.MAX_VALUE;
         }
-        leftGameOverPanel.add(new JLabel("Score:"), BorderLayout.NORTH);
-        rightGameOverPanel.add(new JLabel("High Score:"), BorderLayout.NORTH);
+        Font gameOverFont = new Font(currentScore.getFont().getName(), Font.BOLD, spotSize);
+        JLabel scoreLabel = new JLabel("Score:");
+        scoreLabel.setFont(gameOverFont);
+        leftGameOverPanel.add(scoreLabel, BorderLayout.NORTH);
+        
+        JLabel highScoreLabel = new JLabel("High Score:");
+        highScoreLabel.setFont(gameOverFont);
+        rightGameOverPanel.add(highScoreLabel, BorderLayout.NORTH);
+        
+        currentScore.setFont(gameOverFont);
+        bestScore.setFont(gameOverFont);
+        
         leftGameOverPanel.add(currentScore, BorderLayout.CENTER);
         rightGameOverPanel.add(bestScore, BorderLayout.CENTER);
         gameOverPanel.add(leftGameOverPanel, BorderLayout.WEST);
         gameOverPanel.add(rightGameOverPanel, BorderLayout.EAST);
+        
+        playAgain.setFont(gameOverFont);
         playAgain.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -122,7 +144,7 @@ public class GamePanel extends JPanel implements ActionListener {
         this.numbers = new ImageIcon[9];
         for(int i = 1; i < 9; i++) {
             try {
-                numbers[i] = new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/" + i + ".png")));
+                numbers[i] = scaleIcon(new ImageIcon(ImageIO.read(getClass().getResourceAsStream("/assets/" + i + ".png"))), spotSize);
             } catch (IOException e) {
                 numbers[i] = null;
             }
@@ -174,8 +196,8 @@ public class GamePanel extends JPanel implements ActionListener {
                 final int column = j;
                 flag[i][j] = false;
                 spotsCleared[i][j] = false;
-                spots[i][j].setPreferredSize(new Dimension(30, 30));
-                spots[i][j].setFont(new Font(spots[i][j].getFont().getName(), getFont().getStyle(), 10));
+                spots[i][j].setPreferredSize(new Dimension(spotSize, spotSize));
+                spots[i][j].setFont(new Font(spots[i][j].getFont().getName(), getFont().getStyle(), spotSize / 2));
                 spots[i][j].setForeground(Color.RED);
                 spots[i][j].addActionListener(new ActionListener() {
 
