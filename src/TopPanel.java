@@ -1,7 +1,10 @@
+import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
+import java.awt.Font;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.net.URL;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -9,39 +12,38 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.Timer;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Image;
-
 
 public class TopPanel extends JPanel {
 
-    private JLabel flags = new JLabel("40");
-    private JLabel time = new JLabel("00:00");
-    private Timer timer;
-    private int msElapsed;
-    private JButton difficulty;
-    private JPopupMenu levels;
-    private JMenuItem easy;
-    private JMenuItem medium;
-    private JMenuItem hard;
-    private int diff = 2;
+    public static final int EASY = 1;
+    public static final int MEDIUM = 2;
+    public static final int HARD = 3;
+
+    private final JLabel flags = new JLabel("040");
+    private final JLabel time = new JLabel("00:00:00:000");
+    private final JButton difficulty;
+    private final JPopupMenu levels;
+    private final JMenuItem easy;
+    private final JMenuItem medium;
+    private final JMenuItem hard;
+
     private JLabel flag;
-    private ImageIcon flagPole;
     private JLabel clock;
-    private ImageIcon stopwatch;
+
+    private Timer timer;
+    private long startTime;
+    private int msElapsed;
+    private int diff = MEDIUM;
     private GamePanel gamePanel;
 
-    private ImageIcon scaleIcon(ImageIcon icon, int size) {
-        if (icon == null || icon.getImage() == null) return icon;
-        Image img = icon.getImage();
-        Image scaledImg = img.getScaledInstance(size, size, Image.SCALE_SMOOTH);
-        return new ImageIcon(scaledImg);
-    }
-
     public TopPanel() {
-        this.setLayout(new FlowLayout());
+        this.setLayout(new FlowLayout(FlowLayout.CENTER, 16, 6));
+        this.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+
         this.difficulty = new JButton("Medium");
+        this.difficulty.setFocusable(false);
+        this.difficulty.setToolTipText("Change game difficulty");
+
         this.levels = new JPopupMenu();
         this.easy = new JMenuItem("Easy");
         this.medium = new JMenuItem("Medium");
@@ -49,77 +51,86 @@ public class TopPanel extends JPanel {
         this.levels.add(easy);
         this.levels.add(medium);
         this.levels.add(hard);
+
         this.difficulty.addActionListener(e -> levels.show(difficulty, 0, difficulty.getHeight()));
-        easy.addActionListener(e -> this.setDifficulty(1));
-        medium.addActionListener(e -> this.setDifficulty(2));
-        hard.addActionListener(e -> this.setDifficulty(3));
+        easy.addActionListener(e -> setDifficulty(EASY));
+        medium.addActionListener(e -> setDifficulty(MEDIUM));
+        hard.addActionListener(e -> setDifficulty(HARD));
 
-        Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int baseSize = Math.max(16, screenSize.height / 45);
-        Font topFont = new Font(flags.getFont().getName(), Font.BOLD, baseSize);
-        flags.setFont(topFont);
-        time.setFont(topFont);
-        difficulty.setFont(topFont);
-        easy.setFont(topFont);
-        medium.setFont(topFont);
-        hard.setFont(topFont);
 
-        try {
-            flagPole = scaleIcon(new ImageIcon(getClass().getResource("/assets/Flag.png")), baseSize * 2);
-            flag = new JLabel(flagPole);
-            stopwatch = scaleIcon(new ImageIcon(getClass().getResource("/assets/Stopwatch.png")), baseSize * 2);
-            clock = new JLabel(stopwatch);
-        } catch (Exception e) {
-            flagPole = null;
-            flag = new JLabel();
-            stopwatch = null;
-            clock = new JLabel();
-        }
+        Font monoFont = new Font(Font.MONOSPACED, Font.BOLD, baseSize);
+        Font uiFont = new Font(flags.getFont().getName(), Font.BOLD, baseSize);
 
+        flags.setFont(monoFont);
+        time.setFont(monoFont);
+        flags.setToolTipText("Flags remaining");
+        time.setToolTipText("Elapsed time");
 
-        timer = new Timer(1, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                msElapsed++;
-                updateTime();
+        difficulty.setFont(uiFont);
+        easy.setFont(uiFont);
+        medium.setFont(uiFont);
+        hard.setFont(uiFont);
 
-            }
+        ImageIcon flagIcon = loadScaledIcon("/assets/Flag.png", baseSize * 2);
+        ImageIcon clockIcon = loadScaledIcon("/assets/Stopwatch.png", baseSize * 2);
+        flag = (flagIcon != null) ? new JLabel(flagIcon) : new JLabel();
+        clock = (clockIcon != null) ? new JLabel(clockIcon) : new JLabel();
+
+        timer = new Timer(40, e -> {
+            msElapsed = (int) (System.currentTimeMillis() - startTime);
+            updateTime();
         });
+
         this.add(difficulty);
         this.add(flag);
         this.add(flags);
         this.add(clock);
         this.add(time);
 
+        updateTime();
+    }
 
+    private ImageIcon loadScaledIcon(String resourcePath, int size) {
+        URL url = getClass().getResource(resourcePath);
+        if (url == null) return null;
+        ImageIcon icon = new ImageIcon(url);
+        if (icon.getImage() == null) return null;
+        Image scaled = icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaled);
+    }
 
+    public void updateDifficultyDisplay(int i) {
+        this.diff = i;
+        switch (i) {
+            case EASY:
+                difficulty.setText("Easy");
+                break;
+            case HARD:
+                difficulty.setText("Hard");
+                break;
+            case MEDIUM:
+            default:
+                difficulty.setText("Medium");
+                break;
+        }
     }
 
     public void setDifficulty(int i) {
-        this.diff = i;
-        switch (i) {
-            case 1:
-                difficulty.setText("Easy");
-                gamePanel.setDifficulty(1);
-                break;
-            case 2:
-                difficulty.setText("Medium");
-                gamePanel.setDifficulty(2);
-                break;
-            case 3:
-                difficulty.setText("Hard");
-                gamePanel.setDifficulty(3);
-                break;
-
+        updateDifficultyDisplay(i);
+        reset();
+        if (gamePanel != null) {
+            gamePanel.setDifficulty(i);
         }
-
-
-
     }
 
     public void setFlags(int count) {
-        String number = Integer.toString(count);
-        flags.setText(number);
-
+        if (count >= 0) {
+            flags.setText(String.format("%03d", count));
+        } else {
+            flags.setText(String.valueOf(count));
+        }
     }
 
     public void updateTime() {
@@ -128,30 +139,30 @@ public class TopPanel extends JPanel {
         int min = (msElapsed / 60000) % 60;
         int hour = msElapsed / 3600000;
 
-        String timeElapsed = String.format("%02d:%02d:%02d:%03d", hour, min, sec, ms);
-        time.setText(timeElapsed);
-
-
+        time.setText(String.format("%02d:%02d:%02d:%03d", hour, min, sec, ms));
     }
 
     public void start() {
+        startTime = System.currentTimeMillis() - msElapsed;
         timer.start();
     }
 
     public int getScore() {
         return msElapsed;
-
     }
 
     public void stop() {
-        timer.stop();
+        if (timer.isRunning()) {
+            msElapsed = (int) (System.currentTimeMillis() - startTime);
+            timer.stop();
+            updateTime();
+        }
     }
 
     public void reset() {
         timer.stop();
         msElapsed = 0;
         updateTime();
-
     }
 
     public void setGamePanel(GamePanel l) {
@@ -160,8 +171,5 @@ public class TopPanel extends JPanel {
 
     public GamePanel getGamePanel() {
         return gamePanel;
-
     }
-
-
 }
